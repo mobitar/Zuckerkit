@@ -21,7 +21,7 @@
 		<dict>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>fb388403794615050</string>
+				<string>fb585309308163963</string>
 			</array>
 		</dict>
 	</array>
@@ -38,16 +38,16 @@
 		<key>Development Keys</key>
 		<dict>
 			<key>name</key>
-			<string>Zuckerkit</string>
+			<string>what-appened</string>
 			<key>id</key>
-			<string>388403794615050</string>
+			<string>585309308163963</string>
 		</dict>
 		<key>Production Keys</key>
 		<dict>
 			<key>name</key>
-			<string>Zuckerkit</string>
+			<string>what-appened</string>
 			<key>id</key>
-			<string>388403794615050</string>
+			<string>585309308163963</string>
 		</dict>
 	</dict>
 	<key>LSRequiresIPhoneOS</key>

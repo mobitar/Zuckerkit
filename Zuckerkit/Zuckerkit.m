@@ -186,6 +186,25 @@ static NSString *const publish_actions = @"publish_actions";
         
     }];
 }
+-(void)storeAccessToken:(NSString *)accessToken{
+
+    [[NSUserDefaults standardUserDefaults]setObject:accessToken forKey:@"FB_ACCESS_TOKEN"];
+    [[NSUserDefaults standardUserDefaults]synchronize];
+}
+-(NSString*)loadAccessToken{
+
+    return [[NSUserDefaults standardUserDefaults]objectForKey:@"FB_ACCESS_TOKEN"];
+}
+
+-(void)storeFacebookId:(NSString *)facebookId{
+
+    [[NSUserDefaults standardUserDefaults]setObject:facebookId forKey:@"FB_ID"];
+    [[NSUserDefaults standardUserDefaults]synchronize];
+}
+-(NSString*)loadFacebookId{
+
+    return [[NSUserDefaults standardUserDefaults]objectForKey:@"FB_ID"];
+}
 
 - (NSString*)accessToken
 {
@@ -234,6 +253,20 @@ BOOL FacebookAudienceTypeIsRestricted(FacebookAudienceType type)
         id type = [object objectForKey:@"data"][0][@"value"];
         completionBlock(AudienceTypeForValue(type), nil);
     }];
+}
+#pragma mark code Pawan
+-(void)getFacebookProfilePicture:(void (^)(NSError *error, UIImage *))completionBlock{
+
+    NSString *stringUrl = [NSString stringWithFormat:@"http://graph.facebook.com/%@/picture?width=200&height=200",[self loadFacebookId]];
+    NSURLRequest *request=[NSURLRequest requestWithURL:[NSURL URLWithString:stringUrl]];
+    AFImageRequestOperation *operation=[AFImageRequestOperation imageRequestOperationWithRequest:request success:^(UIImage *image) {
+        
+        NSLog(@"image--%@",image);
+        completionBlock(0,image);
+        
+    }];
+    [operation start];
+
 }
 
 @end

@@ -11,6 +11,7 @@
 
 @interface ViewController ()
 
+@property (weak, nonatomic) IBOutlet UIImageView *imageView;
 @end
 
 @implementation ViewController
@@ -27,12 +28,27 @@
 {
     [[Zuckerkit sharedInstance] openSessionWithBasicInfoThenRequestPublishPermissions:^(NSError *error) {
         if(error) {
+            
             [[[UIAlertView alloc] initWithTitle:@"Fail" message:error.description
               delegate:nil cancelButtonTitle:@"Ok" otherButtonTitles:nil] show];
             return;
         }
-        [[[UIAlertView alloc] initWithTitle:@"Success" message:@"Authorization successful."
-          delegate:nil cancelButtonTitle:@"Ok" otherButtonTitles:nil] show];
+        [[Zuckerkit sharedInstance] getUserInfo:^(id<FBGraphUser> user, NSError *error) {
+        
+                [[Zuckerkit sharedInstance] storeFacebookId:user.id];
+        
+         }];
+    }];
+}
+- (IBAction)downloadFacebookImage:(id)sender {
+    
+    [[Zuckerkit sharedInstance] getFacebookProfilePicture:^(NSError *error, UIImage *image) {
+        
+        if (!error) {
+            
+            [self.imageView setImage:image];
+        }
+        
     }];
 }
 
