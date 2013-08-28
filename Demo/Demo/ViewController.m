@@ -44,11 +44,8 @@
     
     [[Zuckerkit sharedInstance] getFacebookProfilePicture:^(NSError *error, UIImage *image) {
         
-        if (!error) {
-            
-            [self.imageView setImage:image];
-        }
-        
+        NSLog(@"size--%@",NSStringFromCGSize(image.size));
+        [self.imageView setImage:image];
     }];
 }
 

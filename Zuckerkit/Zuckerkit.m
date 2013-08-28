@@ -96,7 +96,7 @@ NSString *NSStringFromFBSessionState(FBSessionState state)
 }
 
 static NSString *const publish_actions = @"publish_actions";
-
+static NSString *const profile_photo=@"picture";
 - (void)requestPublishPermissions:(void(^)(NSError *error))completionBlock
 {
     if([[[FBSession activeSession] permissions] indexOfObject:publish_actions] != NSNotFound) {
@@ -254,19 +254,39 @@ BOOL FacebookAudienceTypeIsRestricted(FacebookAudienceType type)
         completionBlock(AudienceTypeForValue(type), nil);
     }];
 }
-#pragma mark code Pawan
--(void)getFacebookProfilePicture:(void (^)(NSError *error, UIImage *))completionBlock{
 
-    NSString *stringUrl = [NSString stringWithFormat:@"http://graph.facebook.com/%@/picture?width=200&height=200",[self loadFacebookId]];
-    NSURLRequest *request=[NSURLRequest requestWithURL:[NSURL URLWithString:stringUrl]];
-    AFImageRequestOperation *operation=[AFImageRequestOperation imageRequestOperationWithRequest:request success:^(UIImage *image) {
-        
-        NSLog(@"image--%@",image);
-        completionBlock(0,image);
-        
-    }];
-    [operation start];
+-(void)getFacebookProfilePicture:(void (^)(NSError *error, UIImage *image))completionBlock{
 
+    if(![[[FBSession activeSession] accessTokenData] accessToken]) {
+        completionBlock([NSError new],nil);
+        return;
+    }
+
+    NSString *query=@"SELECT  pic FROM user WHERE uid=me()";
+    NSDictionary *queryParam = @{ @"q": query, @"access_token" :  [[[FBSession activeSession] accessTokenData] accessToken]};
+    // Make the API request that uses FQL
+    [FBRequestConnection startWithGraphPath:@"/fql"
+                                 parameters:queryParam
+                                 HTTPMethod:@"GET"
+                          completionHandler:^(FBRequestConnection *connection,
+                                              id result,
+                                              NSError *error) {
+                              if (error) {
+                                  NSLog(@"Error: %@", [error localizedDescription]);
+                              } else {
+                                  FBGraphObject *object = result;
+                                  id url = [object objectForKey:@"data"][0][@"pic"];
+                                  dispatch_queue_t backQueue=dispatch_queue_create("com.zucker.profileimagequeue", NULL);
+                                  dispatch_async(backQueue, ^{
+                                      
+                                      UIImage *tempImage=[UIImage imageWithData:[NSData dataWithContentsOfURL:[NSURL URLWithString:url]]];
+                                      
+                                      completionBlock(0,tempImage);
+                                  });
+                              }
+                         
+     }];
+    
 }
 
 @end
