@@ -3,7 +3,7 @@
 #import "Zuckerkeys.h"
 
 #import <FacebookSDK/FacebookSDK.h>
-#import <FacebookSDK/FBDialogs.h>
+#import <FacebookSDK/FBSettings.h>
 #import <FacebookSDK/FBWebDialogs.h>
 
 @interface Zuckerkit ()
@@ -33,7 +33,7 @@
 
 - (BOOL)handleOpenUrl:(NSURL*)url
 {
-   return [FBSession.activeSession handleOpenURL:url];
+    return [FBSession.activeSession handleOpenURL:url];
 }
 
 - (void)handleDidBecomeActive
@@ -96,7 +96,7 @@ NSString *NSStringFromFBSessionState(FBSessionState state)
 }
 
 static NSString *const publish_actions = @"publish_actions";
-static NSString *const profile_photo=@"picture";
+
 - (void)requestPublishPermissions:(void(^)(NSError *error))completionBlock
 {
     if([[[FBSession activeSession] permissions] indexOfObject:publish_actions] != NSNotFound) {
@@ -181,35 +181,17 @@ static NSString *const profile_photo=@"picture";
 - (void)showAppRequestDialogueWithMessage:(NSString*)message toUserId:(NSString*)userId
 {
     [FBWebDialogs presentDialogModallyWithSession:[FBSession activeSession] dialog:@"apprequests"
-      parameters:@{@"to" : userId, @"message" : message}
-      handler:^(FBWebDialogResult result, NSURL *resultURL, NSError *error) {
-        
-    }];
-}
--(void)storeAccessToken:(NSString *)accessToken{
-
-    [[NSUserDefaults standardUserDefaults]setObject:accessToken forKey:@"FB_ACCESS_TOKEN"];
-    [[NSUserDefaults standardUserDefaults]synchronize];
-}
--(NSString*)loadAccessToken{
-
-    return [[NSUserDefaults standardUserDefaults]objectForKey:@"FB_ACCESS_TOKEN"];
-}
-
--(void)storeFacebookId:(NSString *)facebookId{
-
-    [[NSUserDefaults standardUserDefaults]setObject:facebookId forKey:@"FB_ID"];
-    [[NSUserDefaults standardUserDefaults]synchronize];
-}
--(NSString*)loadFacebookId{
-
-    return [[NSUserDefaults standardUserDefaults]objectForKey:@"FB_ID"];
+                                       parameters:@{@"to" : userId, @"message" : message}
+                                          handler:^(FBWebDialogResult result, NSURL *resultURL, NSError *error) {
+                                              
+                                          }];
 }
 
 - (NSString*)accessToken
 {
     return [[[FBSession activeSession] accessTokenData] accessToken];
 }
+
 
 - (void)logout
 {
@@ -254,39 +236,77 @@ BOOL FacebookAudienceTypeIsRestricted(FacebookAudienceType type)
         completionBlock(AudienceTypeForValue(type), nil);
     }];
 }
-
--(void)getFacebookProfilePicture:(void (^)(NSError *error, UIImage *image))completionBlock{
-
-    if(![[[FBSession activeSession] accessTokenData] accessToken]) {
-        completionBlock([NSError new],nil);
-        return;
+-(BOOL)isAuthorized{
+    
+    if (self.accessToken.length>0) {
+        
+        return YES;
+        
     }
-
-    NSString *query=@"SELECT  pic FROM user WHERE uid=me()";
-    NSDictionary *queryParam = @{ @"q": query, @"access_token" :  [[[FBSession activeSession] accessTokenData] accessToken]};
-    // Make the API request that uses FQL
-    [FBRequestConnection startWithGraphPath:@"/fql"
-                                 parameters:queryParam
-                                 HTTPMethod:@"GET"
-                          completionHandler:^(FBRequestConnection *connection,
-                                              id result,
-                                              NSError *error) {
-                              if (error) {
-                                  NSLog(@"Error: %@", [error localizedDescription]);
-                              } else {
-                                  FBGraphObject *object = result;
-                                  id url = [object objectForKey:@"data"][0][@"pic"];
-                                  dispatch_queue_t backQueue=dispatch_queue_create("com.zucker.profileimagequeue", NULL);
-                                  dispatch_async(backQueue, ^{
-                                      
-                                      UIImage *tempImage=[UIImage imageWithData:[NSData dataWithContentsOfURL:[NSURL URLWithString:url]]];
-                                      
-                                      completionBlock(0,tempImage);
-                                  });
-                              }
-                         
+    return NO;
+}
+///download user profile picture
+- (void)facebookImageBlockWithCompletionHandler:(void(^)(UIImage *profileImage, NSError *error))completionHandler
+{
+    
+    [FBRequestConnection startForMeWithCompletionHandler:^(FBRequestConnection *userInfoConnection, id userInfo, NSError *error1)
+     {
+         [FBRequestConnection startWithGraphPath:@"me?fields=picture.type(large)" completionHandler:^(FBRequestConnection *userPictureConnection, FBGraphObject *profileObject, NSError *errorr2)
+          {
+              if(errorr2)
+              {
+                  completionHandler(nil,nil);
+              }
+              else
+              {
+                  id url = [profileObject objectForKey:@"picture"][@"data"][@"url"];
+                  dispatch_queue_t backQueue=dispatch_queue_create("com.zucker.profileImageQueue", NULL);
+                  dispatch_async(backQueue, ^{
+                      
+                      UIImage *tempImage=[UIImage imageWithData:[NSData dataWithContentsOfURL:[NSURL URLWithString:url]]];
+                      completionHandler(tempImage,0);
+                  });
+              }
+          }];
      }];
     
+}
+
+-(void)saveUserInformation:(NSDictionary *)userInfo{
+    
+    [[NSUserDefaults standardUserDefaults] setObject:userInfo forKey:@"FB_USER_INFO"];
+    [[NSUserDefaults standardUserDefaults] synchronize];
+    
+}
+- (NSDictionary*)loadUserInfo{
+    
+    
+    return [[NSUserDefaults standardUserDefaults] objectForKey:@"FB_USER_INFO"];
+    
+}
+- (void)postFeedToUserFacebookWall:(NSString*)postFeed{
+    
+    [FBRequestConnection
+     startWithGraphPath:@"me/feed"
+     parameters:@{@"message": postFeed}
+     HTTPMethod:@"POST"
+     completionHandler:^(FBRequestConnection *connection,
+                         id result,
+                         NSError *error) {
+         if (error) {
+             
+             NSLog(@"%@",[NSString stringWithFormat:
+                          @"error: domain = %@, code = %d",
+                          error.domain, error.code]);
+             
+         } else {
+             
+             NSLog(@"%@",[NSString stringWithFormat:
+                          @"Posted action, id: %@",
+                          result[@"id"]]);
+         }
+         
+     }];
 }
 
 @end

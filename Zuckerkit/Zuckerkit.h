@@ -1,9 +1,15 @@
 
 #import <Foundation/Foundation.h>
-#import <UIKit/UIKit.h>
 #import <FacebookSDK/FBGraphObject.h>
 #import <FacebookSDK/FBGraphUser.h>
 #import <FacebookSDK/FacebookSDK.h>
+
+typedef enum {
+    ZuckerImageSizeSquare, // 50px Wide  50px High
+    ZuckerImageImageSizeSmall, // 50px Wide  Variable Height
+    ZuckerImageImageSizeNormal, // 100px Width Variable Height
+    ZuckerImageImageSizeLarge // 200px Wide Variable Height
+} ZuckerImageSize;
 
 typedef NS_ENUM(NSInteger, FacebookAudienceType)
 {
@@ -11,13 +17,7 @@ typedef NS_ENUM(NSInteger, FacebookAudienceType)
     FacebookAudienceTypeFriends,
     FacebookAudienceTypeEveryone
 };
-// Image sizes
-typedef enum {
-    FacebookImageSizeMini, // 24px by 24px
-    FacebookImageSizeNormal, // 48x48
-    FacebookImageSizeBigger, // 73x73
-    FacebookImageSizeOriginal // original size of image
-} FacebookImageSize;
+
 BOOL FacebookAudienceTypeIsRestricted(FacebookAudienceType type);
 
 @interface Zuckerkit : NSObject
@@ -33,17 +33,18 @@ BOOL FacebookAudienceTypeIsRestricted(FacebookAudienceType type);
 - (void)getFriends:(void(^)(NSArray *friends, NSError *error))completionBlock;
 - (void)getAppAudienceType:(void(^)(FacebookAudienceType audienceType, NSError *error))completionBlock;
 - (void)showAppRequestDialogueWithMessage:(NSString*)message toUserId:(NSString*)userId;
-- (void)getFacebookProfilePicture:(void(^)(NSError *error, UIImage *image))completionBlock;
+- (void)facebookImageBlockWithCompletionHandler:(void(^)(UIImage *profilePicture, NSError *error))completionHandler;
 
-/////manage facebook access token
-- (void)storeAccessToken:(NSString*)accessToken;
-- (NSString*)loadAccessToken;
-////manage user info
-- (void)storeFacebookId:(NSString*)facebookId;
-- (NSString*)loadFacebookId;
+- (void)postFeedToUserFacebookWall:(NSString*)postFeed;
 
+/////token management
+- (void)saveUserInformation:(NSDictionary*)userInfo;
+- (NSDictionary*)loadUserInfo;
+- (BOOL)isAuthorized;
 - (NSString*)accessToken;
+
+- (void)logout;
 - (BOOL)handleOpenUrl:(NSURL*)url;
 - (void)handleDidBecomeActive;
-- (void)logout;
+
 @end
