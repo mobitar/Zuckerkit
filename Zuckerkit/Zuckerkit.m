@@ -74,7 +74,7 @@ NSString *NSStringFromFBSessionState(FBSessionState state)
 
 - (void)openSessionWithBasicInfoThenRequestPublishPermissions:(void(^)(NSError *error))completionBlock
 {
-    [self openSessionWithBasicInfo:^(NSError *error) {
+    [self openSessionWithPublicProfilePermissionsAsWellAs:nil completion:^(NSError *error) {
         if(error) {
             completionBlock(error);
             return;
@@ -88,7 +88,7 @@ NSString *NSStringFromFBSessionState(FBSessionState state)
     }];
 }
 
-- (void)openSessionWithBasicInfo:(void(^)(NSError *error))completionBlock
+- (void)openSessionWithPublicProfilePermissionsAsWellAs:(NSArray *)extraPermissions completion:(void(^)(NSError *error))completionBlock
 {
     if([[FBSession activeSession] isOpen]) {
         completionBlock(nil);
@@ -97,7 +97,8 @@ NSString *NSStringFromFBSessionState(FBSessionState state)
     
     self.openBlock = completionBlock;
     
-    [FBSession openActiveSessionWithReadPermissions:@[@"public_profile"] allowLoginUI:YES completionHandler:^(FBSession *session, FBSessionState status, NSError *error) {
+    NSArray *permissions = [@[@"public_profile"] arrayByAddingObjectsFromArray:extraPermissions];
+    [FBSession openActiveSessionWithReadPermissions:permissions allowLoginUI:YES completionHandler:^(FBSession *session, FBSessionState status, NSError *error) {
         dispatch_async(dispatch_get_main_queue(), ^{
             [self sessionStateChanged:session state:status error:error open:YES permissions:NO];
         });

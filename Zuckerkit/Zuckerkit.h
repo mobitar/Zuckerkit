@@ -25,7 +25,9 @@ BOOL FacebookAudienceTypeIsRestricted(FacebookAudienceType type);
 
 + (instancetype)sharedInstance;
 
-- (void)openSessionWithBasicInfo:(void(^)( NSError *error))completionBlock;
+/** Opens the session with the "public_profile" read permissions. You can pass in extra permissions, like "email" to request additional read permissions */
+- (void)openSessionWithPublicProfilePermissionsAsWellAs:(NSArray *)extraPermissions completion:(void(^)(NSError *error))completionBlock;
+
 - (void)requestPublishPermissions:(void(^)( NSError *error))completionBlock;
 - (void)getUserInfo:(void(^)(id<FBGraphUser> user, NSError *error))completionBlock;
 - (void)openSessionWithBasicInfoThenRequestPublishPermissions:(void(^)(NSError *error))completionBlock;
