@@ -5,7 +5,7 @@ Pod::Spec.new do |s|
   s.homepage     = "https://github.com/mobitar/Zuckerkit"
   s.license      = { :type => 'MIT', :file => 'LICENSE' }
   s.author       = 'Mo Bitar'
-  s.source       = { :git => "https://github.com/cdrx/Zuckerkit.git", :tag => s.version.to_s }
+  s.source       = { :git => "https://github.com/mobitar/Zuckerkit.git", :tag => s.version.to_s }
   s.platform     = :ios, '6.0'
   s.source_files = 'Zuckerkit/**/*.{h,m}'
   s.requires_arc = true
