@@ -6,8 +6,8 @@ Pod::Spec.new do |s|
   s.license      = { :type => 'MIT', :file => 'LICENSE' }
   s.author       = 'Mo Bitar'
   s.source       = { :git => "https://github.com/mobitar/Zuckerkit.git", :tag => s.version.to_s }
-  s.platform     = :ios, '7.0'
-  s.source_files = 'Zuckerkit'
+  s.platform     = :ios, '6.0'
+  s.source_files = 'Zuckerkit/**/*.{h,m}'
   s.requires_arc = true
   s.dependency 'Facebook-iOS-SDK', '~> 3.11.0'
 end
