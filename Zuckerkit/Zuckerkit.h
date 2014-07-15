@@ -37,6 +37,10 @@ BOOL FacebookAudienceTypeIsRestricted(FacebookAudienceType type);
 - (void)getAppAudienceType:(void(^)(FacebookAudienceType audienceType, NSError *error))completionBlock;
 - (void)showAppRequestDialogueWithMessage:(NSString*)message toUserId:(NSString*)userId;
 
+// Config
+- (void)setAppId:(NSString *)appId;
+- (void)setAppDisplayName:(NSString *)displayName;
+
 - (NSString*)accessToken;
 - (BOOL)handleOpenUrl:(NSURL*)url;
 - (void)handleDidBecomeActive;

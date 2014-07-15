@@ -46,28 +46,16 @@ Invite friend to app via request dialogue (sends a request to a friend to join t
 ```
 
 #Usage
-1. Create a dictionary entry in your app plist called Zuckerkit with the following format:
 
-	Zuckerkit: (Dictionary)
-	 - Production (Boolean)
-	 - Development Keys (Dictionary)
-	   - id (String)
-	   - name (String)
-	 - Production Keys (Dictionary)
-	   - id (String)
-	   - name (String)
-	   
-2. Also, as part of the normal FacebookSDK integration, register your Facebook App Id in your app's URL schemes:
-	  
-	  URL types: (Array)
- 	  - Item 0 (Dictionary)
-    	- URL Schemes (Array)
-    		- Item 0 (String, set equal to your Facebook App Id)
-    		
-	   
-3. In your AppDelegate.m, implement the following methods (or add to them if they already exist):
+1. In your AppDelegate.m, implement the following methods (or add to them if they already exist):
 
 	``` objective-c
+	- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
+	{
+		[[Zuckerkit sharedInstance] setAppDisplayName:@"app_display_name"];
+        [[Zuckerkit sharedInstance] setAppId:@"app_id"];
+	}
+	
 	- (BOOL)application:(UIApplication *)application openURL:(NSURL *)url
 	   sourceApplication:(NSString *)sourceApplication annotation:(id)annotation
 	{	
@@ -82,6 +70,15 @@ Invite friend to app via request dialogue (sends a request to a friend to join t
 	    [[Zuckerkit sharedInstance] handleDidBecomeActive];
 	}
 	```
+	   
+2. As part of the normal FacebookSDK integration, register your Facebook App Id in your app's URL schemes (in your plist file):
+	  
+	  URL types: (Array)
+ 	  - Item 0 (Dictionary)
+    	- URL Schemes (Array)
+    		- Item 0 (String, set equal to your Facebook App Id)
+    		
+	   
 
 
 #Contribution

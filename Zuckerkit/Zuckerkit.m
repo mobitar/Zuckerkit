@@ -9,7 +9,6 @@
 //
 
 #import "Zuckerkit.h"
-#import "Zuckerkeys.h"
 
 #import <FacebookSDK/FacebookSDK.h>
 #import <FacebookSDK/FBDialogs.h>
@@ -29,15 +28,18 @@
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         instance = [self.class new];
-        [instance setSettings];
     });
     return instance;
 }
 
-- (void)setSettings
+- (void)setAppId:(NSString *)appId
 {
-    [FBSettings setDefaultAppID:FacebookAppId()];
-    [FBSettings setDefaultDisplayName:FacebookDisplayName()];
+    [FBSettings setDefaultAppID:appId];
+}
+
+- (void)setAppDisplayName:(NSString *)displayName
+{
+    [FBSettings setDefaultDisplayName:displayName];
 }
 
 - (BOOL)handleOpenUrl:(NSURL*)url
