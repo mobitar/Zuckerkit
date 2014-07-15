@@ -18,6 +18,7 @@
 // single use blocks. these blocks are immediatly nulled after they are used
 @property (nonatomic, copy) void(^openBlock)(NSError *error);
 @property (nonatomic, copy) void(^permissionsBlock)(NSError *error);
+@property (nonatomic) FBSession *session;
 @end
 
 @implementation Zuckerkit
@@ -92,15 +93,28 @@ NSString *NSStringFromFBSessionState(FBSessionState state)
 
 - (void)openSessionWithPublicProfilePermissionsAsWellAs:(NSArray *)extraPermissions completion:(void(^)(NSError *error))completionBlock
 {
-    if([[FBSession activeSession] isOpen]) {
+    NSAssert([FBSettings defaultAppID], nil);
+    NSAssert([FBSettings defaultDisplayName], nil);
+    
+    if(self.session.isOpen) {
         completionBlock(nil);
         return;
     }
     
+    FBSessionLoginBehavior behavior = FBSessionLoginBehaviorUseSystemAccountIfPresent;
+    
+    // create a session object, with defaults accross the board, except that we provide a custom
+    // instance of FBSessionTokenCachingStrategy
+    FBSession *session = [[FBSession alloc] initWithAppID:nil
+                                              permissions:[@[@"public_profile", @"user_birthday"] arrayByAddingObjectsFromArray:extraPermissions]
+                                          urlSchemeSuffix:nil
+                                       tokenCacheStrategy:nil];
+    
+    self.session = session;
+    
     self.openBlock = completionBlock;
     
-    NSArray *permissions = [@[@"public_profile"] arrayByAddingObjectsFromArray:extraPermissions];
-    [FBSession openActiveSessionWithReadPermissions:permissions allowLoginUI:YES completionHandler:^(FBSession *session, FBSessionState status, NSError *error) {
+    [session openWithBehavior:behavior completionHandler:^(FBSession *session, FBSessionState status, NSError *error) {
         dispatch_async(dispatch_get_main_queue(), ^{
             [self sessionStateChanged:session state:status error:error open:YES permissions:NO];
         });
@@ -111,12 +125,12 @@ static NSString *const publish_actions = @"publish_actions";
 
 - (void)requestPublishPermissions:(void(^)(NSError *error))completionBlock
 {
-    if([[[FBSession activeSession] permissions] indexOfObject:publish_actions] != NSNotFound) {
+    if([[self.session permissions] indexOfObject:publish_actions] != NSNotFound) {
         completionBlock(nil);
         return;
     }
     
-    if([[FBSession activeSession] isOpen] == NO) {
+    if([self.session isOpen] == NO) {
         // error
         [[[UIAlertView alloc] initWithTitle:@"Error" message:@"Attempting to request publish permissions on unopened session." delegate:nil cancelButtonTitle:@"Ok" otherButtonTitles:nil] show];
         return;
@@ -124,7 +138,7 @@ static NSString *const publish_actions = @"publish_actions";
     
     self.permissionsBlock = completionBlock;
     
-    [FBSession.activeSession requestNewPublishPermissions:@[publish_actions] defaultAudience:FBSessionDefaultAudienceEveryone completionHandler:^(FBSession *session, NSError *error) {
+    [self.session requestNewPublishPermissions:@[publish_actions] defaultAudience:FBSessionDefaultAudienceEveryone completionHandler:^(FBSession *session, NSError *error) {
         dispatch_async(dispatch_get_main_queue(), ^{
             [self sessionStateChanged:session state:session.state error:error open:NO permissions:YES];
         });
@@ -168,17 +182,18 @@ static NSString *const publish_actions = @"publish_actions";
 }
 
 - (void)getUserInfo:(void(^)(id<FBGraphUser> user, NSError *error))completionBlock
-{
-    [[FBRequest requestForMe] startWithCompletionHandler:
-     ^(FBRequestConnection *connection, NSDictionary<FBGraphUser> *user, NSError *error) {
-         completionBlock(user, error);
-     }];
+{    
+    FBRequest *me = [[FBRequest alloc] initWithSession:self.session
+                                             graphPath:@"me"];
+    [me startWithCompletionHandler:^(FBRequestConnection *connection, id result, NSError *error) {
+        completionBlock(result, error);
+    }];
 }
 
 - (void)getFriends:(void(^)(NSArray *friends, NSError *error))completionBlock
 {
     FBRequest* friendsRequest = [FBRequest requestForMyFriends];
-    friendsRequest.session = [FBSession activeSession];
+    friendsRequest.session = [self session];
     [friendsRequest startWithCompletionHandler: ^(FBRequestConnection *connection, NSDictionary* result, NSError *error) {
         if(error) {
             completionBlock(nil, error);
@@ -192,7 +207,7 @@ static NSString *const publish_actions = @"publish_actions";
 
 - (void)showAppRequestDialogueWithMessage:(NSString*)message toUserId:(NSString*)userId
 {
-    [FBWebDialogs presentDialogModallyWithSession:[FBSession activeSession] dialog:@"apprequests"
+    [FBWebDialogs presentDialogModallyWithSession:[self session] dialog:@"apprequests"
       parameters:@{@"to" : userId, @"message" : message}
       handler:^(FBWebDialogResult result, NSURL *resultURL, NSError *error) {
         
@@ -201,7 +216,7 @@ static NSString *const publish_actions = @"publish_actions";
 
 - (NSString*)accessToken
 {
-    return [[[FBSession activeSession] accessTokenData] accessToken];
+    return [[[self session] accessTokenData] accessToken];
 }
 
 - (void)logout
@@ -228,13 +243,13 @@ BOOL FacebookAudienceTypeIsRestricted(FacebookAudienceType type)
 
 - (void)getAppAudienceType:(void(^)(FacebookAudienceType audienceType, NSError *error))completionBlock
 {
-    if(![[[FBSession activeSession] accessTokenData] accessToken]) {
+    if(![[[self session] accessTokenData] accessToken]) {
         completionBlock(0, [NSError new]);
         return;
     }
     
     NSString *query = @"SELECT value FROM privacy_setting WHERE name = 'default_stream_privacy'";
-    NSDictionary *queryParam = @{ @"q": query, @"access_token" :  [[[FBSession activeSession] accessTokenData] accessToken]};
+    NSDictionary *queryParam = @{ @"q": query, @"access_token" :  [[[self session] accessTokenData] accessToken]};
     
     [FBRequestConnection startWithGraphPath:@"/fql" parameters:queryParam HTTPMethod:@"GET" completionHandler:^(FBRequestConnection *connection, id result, NSError *error) {
         if(error) {
