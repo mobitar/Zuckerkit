@@ -182,7 +182,7 @@ static NSString *const publish_actions = @"publish_actions";
 }
 
 - (void)getUserInfo:(void(^)(id<FBGraphUser> user, NSError *error))completionBlock
-{    
+{
     FBRequest *me = [[FBRequest alloc] initWithSession:self.session
                                              graphPath:@"me"];
     [me startWithCompletionHandler:^(FBRequestConnection *connection, id result, NSError *error) {
@@ -260,6 +260,21 @@ BOOL FacebookAudienceTypeIsRestricted(FacebookAudienceType type)
         FBGraphObject *object = result;
         id type = [object objectForKey:@"data"][0][@"value"];
         completionBlock(AudienceTypeForValue(type), nil);
+    }];
+}
+
+- (void)requestProfilePictureURLWithCompletionBlock:(void(^)(NSURL *imageURL, NSError *error))completionBlock
+{
+    FBRequest *request = [FBRequest requestForMe];
+    request.session = [self session];
+    [request startWithCompletionHandler:^(FBRequestConnection *connection, NSDictionary<FBGraphUser> *FBuser, NSError *error) {
+        if (error) {
+            completionBlock(nil, error);
+            return;
+        }
+        
+        NSString *userImageURL = [NSString stringWithFormat:@"https://graph.facebook.com/%@/picture?type=large", [FBuser username]];
+        completionBlock([NSURL URLWithString:userImageURL], nil);
     }];
 }
 
