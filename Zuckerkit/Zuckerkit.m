@@ -43,6 +43,11 @@
     [FBSettings setDefaultDisplayName:displayName];
 }
 
+- (void)enablePlatformCompatibility:(BOOL)state
+{
+    [FBSettings enablePlatformCompatibility:state];
+}
+
 - (BOOL)handleOpenUrl:(NSURL*)url
 {
    return [FBSession.activeSession handleOpenURL:url];
