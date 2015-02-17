@@ -42,6 +42,7 @@ BOOL FacebookAudienceTypeIsRestricted(FacebookAudienceType type);
 // Config
 - (void)setAppId:(NSString *)appId;
 - (void)setAppDisplayName:(NSString *)displayName;
+- (void)enablePlatformCompatibility:(BOOL)state;
 
 - (NSString*)accessToken;
 - (BOOL)handleOpenUrl:(NSURL*)url;
